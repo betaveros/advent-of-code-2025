@@ -9,7 +9,7 @@ uf := {};
 
 root := \x -> switch (uf !? x)
 	case null -> x
-	case p -> root(uf[x]);
+	case p -> (uf[x] = root(p); uf[x]);
 
 mrg := \x, y -> (
 	rx := root(x);
