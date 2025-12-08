@@ -1,0 +1,17 @@
+day := 3;
+import "advent-prelude.noul";
+
+puzzle_input := advent_input();
+
+submit! 1, puzzle_input.lines map \x -> x combinations 2 mapply $ map int then max\\ then sum;
+submit! 2, puzzle_input.lines map (\x -> (
+	f := memoize \i, n -> (
+		m := 0;
+		if (i > n) m max= f(i-1, n);
+		if (n > 0) m max= f(i-1, n-1)*10 + int(x[i-1]);
+		m
+	);
+	# (this overflows the web version's stack... but you can get around it by
+	# manually calling f with all the lower arguments)
+	f(len(x), 12)
+)) then sum;

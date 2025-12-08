@@ -1,0 +1,34 @@
+day := now(-5)["day"];
+import "advent-prelude.noul";
+
+# dim := \text -> F"\x1b[38;5;242m{text}\x1b[0m";
+
+stats := \text -> (
+	lns := lines text;
+	lens := sort! lns map len;
+	s := F"{len(text)} chars in {len(words text)} words over {len(lns)} lines";
+	if (lens) s $= F" med {lens[lens//2]} max {lens[-1]}";
+	s
+);
+
+summarize := \text -> (
+	if (len(text) <= 60)
+		print(text)
+	else
+		print(F"{bold_red(text[:30])}[... {len(text) - 60} chars ...]{bold_red(text[-30:])}")
+);
+
+switch (argv)
+case [] -> print("Hello!")
+case ["day"] -> print(day)
+case ["wait"] -> (
+	while (1) (
+		t := now(-5);
+		print(F"{t['hour']#02}:{t['minute']#02}:{t['second']#02}:{t['nanosecond']#09}");
+		if (t['hour'] == 0) break;
+		sleep(1.337)
+	);
+	day = now(-5)["day"]; # (!!)
+	summarize(advent_input());
+)
+case a -> throw F"Unsupported: {a}"

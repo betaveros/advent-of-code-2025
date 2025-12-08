@@ -1,0 +1,11 @@
+day := 1;
+import "advent-prelude.noul";
+
+puzzle_input := advent_input();
+
+r := puzzle_input.lines map \x .+ y -> switch (x)
+	case "L" -> -(int(y))
+	case "R" ->   int(y);
+submit! 1, r scan + map (%%100) count 50;
+r = r flat_map \x -> if (x < 0) (-1).*(abs(x)) else (1).*x;
+submit! 2, r scan + map (%%100) count 50;

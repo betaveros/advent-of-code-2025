@@ -1,0 +1,15 @@
+day := 5;
+import "advent-prelude.noul";
+
+puzzle_input := advent_input();
+
+ranges_text, ingredients_text := puzzle_input split "\n\n";
+ranges := ranges_text.lines map (split "-") mapmap int;
+ingredients := ingredients_text.lines map int;
+submit! 1, ingredients count \x -> ranges any apply(_ <= x <= _);
+submit! 2, ranges
+	flat_map \[lo, hi] -> [[lo, 1], [hi+1, -1]]\\
+	then sort
+	scan \[a, d], [b, d'] -> [b, d + d']\\
+	pairwise \[a, d], [b, d'] -> if (d > 0) b - a else 0\\
+	then sum;

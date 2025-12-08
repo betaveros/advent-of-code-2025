@@ -1,0 +1,33 @@
+day := 7;
+import "advent-prelude.noul";
+
+puzzle_input := advent_input();
+
+splits := 0;
+puzzle_input.lines fold \beams, line -> (
+	for (i, c <<- line) (
+		switch (c)
+		case "S" -> (beams |.= i)
+		case "^" -> if (i in beams) (
+			splits += 1;
+			beams = beams -. i |. (i-1) |. (i+1)
+		)
+		case "." -> null
+	);
+	beams
+)\\ from {};
+submit! 1, splits;
+
+submit! 2, puzzle_input.lines fold \beams, line -> (
+	for (i, c <<- line) (
+		switch (c)
+		case "S" -> (beams[i] = 1)
+		case "^" -> (
+			beams[i-1] += beams[i];
+			beams[i+1] += beams[i];
+			beams[i] = 0
+		)
+		case "." -> null
+	);
+	beams
+)\\ from {:0} then values then sum;

@@ -1,0 +1,37 @@
+day := 8;
+import "advent-prelude.noul";
+
+puzzle_input := advent_input();
+
+pts := puzzle_input.lines map ints map vector;
+
+uf := {};
+
+root := \x -> switch (uf !? x)
+	case null -> x
+	case p -> root(uf[x]);
+
+mrg := \x, y -> (
+	rx := root(x);
+	ry := root(y);
+	if (rx != ry) (uf[rx] = ry; return 1);
+	return 0
+);
+
+for (p1, p2 <- pts combinations 2 sort_on \[p, q] -> sum((p - q)^2)\\ take 1000) (
+	mrg(p1, p2);
+);
+submit! 1, pts map root
+	then frequencies then values
+	then sort then reverse take 3
+	then product;
+
+uf = {};
+c := 0;
+for (p1, p2 <- pts combinations 2 sort_on \[p, q] -> sum((p - q)^2)) (
+	c += mrg(p1, p2);
+	if (c >= len(pts) - 1) (
+		submit! 2, p1[0] * p2[0];
+		break;
+	)
+);

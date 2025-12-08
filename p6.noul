@@ -1,0 +1,22 @@
+day := 6;
+import "advent-prelude.noul";
+
+puzzle_input := advent_input();
+
+table := puzzle_input.lines map words;
+
+ops := {"+": +, "*": *};
+
+submit! 1, table.transpose map \things +. op -> things map int fold ops[op]\\ then sum;
+
+ls := puzzle_input.lines;
+ls = ls[:-1] +. (" " $* len(ls[-1])) +. ls[-1];
+
+ans := 0;
+acc := [];
+ls.transpose.reverse mapply $ then unlines then words each \x -> switch (x)
+	case "+" -> (ans += sum(acc); acc = [])
+	case "*" -> (ans += product(acc); acc = [])
+	case n -> (acc append= int(n));
+
+submit! 2, ans

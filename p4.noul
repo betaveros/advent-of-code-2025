@@ -1,0 +1,32 @@
+day := 4;
+import "advent-prelude.noul";
+
+puzzle_input := advent_input();
+
+grid := puzzle_input.lines;
+
+# surround grid by "."s on all four sides
+grid map= "." $ _ $ ".";
+grid append= "." $* len(grid[0]);
+grid = ("." $* len(grid[0])) .+ grid;
+grid map= list;
+
+nines := grid window 3 flat_map transpose >>> window(3) >>> map(flatten);
+submit! 1, nines count \x -> x[4] == "@" and (x count "@") < 5;
+
+go := true;
+c := 0;
+while (go) (
+	go = false;
+	for (i <- 0 til len(grid); j <- 0 til len(grid[i]); if grid[i][j] == "@") (
+		ats := for (i' <- i - 1 to i + 1; j' <- j - 1 to j + 1) yield (
+			grid[i'][j'] == "@"
+		) into sum;
+		if (ats < 5) (
+			grid[i][j] = ".";
+			c += 1;
+			go = true;
+		)
+	)
+);
+submit! 2, c;

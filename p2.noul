@@ -1,0 +1,10 @@
+day := 2;
+import "advent-prelude.noul";
+
+puzzle_input := advent_input();
+
+nums := puzzle_input.strip split "," map (split "-") mapmap int mapply to then flatten;
+invalid := \x -> (s := str(x); s == s[:len(s)//2]$*2);
+submit! 1, nums filter invalid then sum;
+invalid' := \x -> (s := str(x); 2 to len(s) any (\n -> len(s) % n == 0 and s == s[:len(s)//n]$*n));
+submit! 2, nums filter invalid' then sum;
