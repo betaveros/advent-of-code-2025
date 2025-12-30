@@ -1,0 +1,33 @@
+day := 17;
+import "advent-prelude.noul";
+
+graph := {:[]};
+vertices := {};
+has_out := {};
+has_in := {};
+
+for (src, dst <- read().lines map ints) (
+	graph[dst] append= src;
+	vertices |.= src;
+	vertices |.= dst;
+	has_out |.= src;
+	has_in |.= dst;
+);
+
+longest := memoize \dst -> (
+	srcs := graph[dst];
+	if (srcs) srcs map longest then max then (+1) else 1
+);
+print(vertices map longest then max);
+
+# "Source" = vertex w no in-degree
+# "Sink" = vertex w no out-degree
+
+# If there exists a (source, sink) where there is no path from source to sink,
+# connect the sink to the source; you still have a DAG, and reduced both #s by
+# 1.
+
+# Otherwise, every source can go to every sink, so just pair em up arbitrarily.
+# Now every vertex can go to a sink, then to any source, then to any vertex.
+
+print(max(len(vertices -- has_out), len(vertices -- has_in)))

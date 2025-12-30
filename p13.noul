@@ -1,0 +1,35 @@
+day := 13;
+import "advent-prelude.noul";
+
+# plants := [];
+odd_sum := 0;
+even_sum := 0;
+odd_count := 0;
+even_count := 0;
+for (ins <- read().lines) (
+	instr, target := ins.words;
+	switch (instr)
+	case "plant" -> (
+		t := int(target);
+		if (even t) (even_sum += t; even_count += 1)
+		else (odd_sum += t; odd_count += 1)
+	)
+	case "spray" -> switch (target)
+		case "all" -> (
+			odd_sum, even_sum = even_sum + even_count, odd_sum + odd_count;
+			swap odd_count, even_count
+		)
+		case "even" -> (
+			odd_sum += even_sum + even_count;
+			odd_count += even_count;
+			even_sum = 0;
+			even_count = 0;
+		)
+		case "odd" -> (
+			even_sum += odd_sum + odd_count;
+			even_count += odd_count;
+			odd_sum = 0;
+			odd_count = 0;
+		)
+);
+print(odd_sum + even_sum)

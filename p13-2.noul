@@ -1,0 +1,30 @@
+day := 13;
+import "advent-prelude.noul";
+
+sprays := []; # (0, 1, -1; and count); reverse order
+ans := 0;
+for (ins <- reverse! read().lines) (
+	instr, target := ins.words;
+	switch (instr)
+	case "plant" -> (
+		t := int(target);
+		for (kind, cnt <- reverse sprays) (
+			for (i <- 0 til cnt) (
+				if (kind == (-1) or (t&1) == kind) (
+					t >>= 1;
+				) else break
+			);
+			if (t == 0) break
+		);
+		ans += t
+	)
+	case "spray" -> (
+		kind := switch (target)
+			case "all" -> (-1)
+			case "even" -> 0
+			case "odd" -> 1;
+		if (sprays and sprays[-1][0] == kind) (sprays[-1][1] += 1)
+		else (sprays append= [kind, 1]);
+	)
+);
+print(ans)

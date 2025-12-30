@@ -1,0 +1,73 @@
+day := 15;
+import "advent-prelude.noul";
+
+struct Treap(prio, quality, size, lc, rc);
+
+tmerge := \a, b -> (
+	if (a == null) b
+	else if (b == null) a
+	else if (prio(a) < prio(b)) (
+		Treap(prio(a), quality(a), size(a) + size(b), lc(a), tmerge(rc(a), b))
+	)
+	else (
+		Treap(prio(b), quality(b), size(a) + size(b), tmerge(a, lc(b)), rc(b))
+	)
+);
+
+tsize := \a -> if (a == null) 0 else size a;
+
+tsplit_quality := \a, q -> (
+	if (a == null) [null, null]
+	else if (quality(a) > q) (
+		lsl, lsr := tsplit_quality(lc(a), q);
+		a[size] -= tsize(lsl);
+		a[lc] = lsr;
+		[lsl, a]
+	)
+	else (
+		rsl, rsr := tsplit_quality(a.rc, q);
+		a[size] -= tsize(rsr);
+		a[rc] = rsl;
+		[a, rsr]
+	)
+);
+
+tsplit_size := \a, left_size -> (
+	if (left_size == 0) [null, a]
+	else if (size(a) == left_size) [a, null]
+	else if (tsize(lc(a)) >= left_size) (
+		lsl, lsr := tsplit_size(a.lc, left_size);
+		a[size] -= left_size;
+		a[lc] = lsr;
+		[lsl, a]
+	)
+	else (
+		rsl, rsr := tsplit_size(a.rc, left_size - a.lc.tsize - 1);
+		a[size] = left_size;
+		a[rc] = rsl;
+		[a, rsr]
+	)
+);
+
+treap := null;
+
+req_i := 1;
+ans := 0;
+for (i, ins <<- read().lines) (
+	if (i % 100 == 0) print(i);
+	switch (ins.words)
+	case ["receive", n] -> (
+		left, right := tsplit_quality(consume treap, int(n));
+		treap = tmerge(consume left, tmerge(
+			Treap(random(), int(n), 1, null, null), consume right));
+	)
+	case ["request"] -> (
+		sz := treap.size // 2;
+		left, right := tsplit_size(consume treap, sz);
+		extract, right' := tsplit_size(consume right, 1);
+		ans += req_i * extract.quality;
+		req_i += 1;
+		treap = tmerge(consume left, consume right');
+	)
+);
+print(ans)

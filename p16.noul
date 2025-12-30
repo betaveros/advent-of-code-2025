@@ -1,0 +1,24 @@
+day := 16;
+import "advent-prelude.noul";
+
+lessons := read().lines map ints sort_on third;
+cur := -(10^10);
+taken := 0;
+for (_, start, end <- lessons) (
+	if (start >= cur) (
+		cur = end;
+		taken += 1;
+	)
+);
+print(taken);
+
+weeks := []; # list of end times per week, sorted in reverse order
+for (_, start, end <- lessons) (
+	i := weeks locate? (<= start);
+	if (i != null) (
+		remove weeks[i];
+	);
+	weeks append= end;
+	weeks = reverse(sort(weeks));
+);
+print(len(weeks));

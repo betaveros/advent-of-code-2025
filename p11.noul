@@ -1,0 +1,19 @@
+day := 11;
+import "advent-prelude.noul";
+
+puzzle_input := advent_input();
+
+graph := {:[]};
+puzzle_input.lines each \ln -> (
+	src, dsts := ln split ": ";
+	dsts .= words;
+	for (dst <- dsts) graph[dst] append= src;
+);
+dp := memoize \s -> if (s == "you") 1 else graph[s] map dp then sum;
+submit! 1, dp("out");
+
+dp = memoize \s, dac, fft -> (
+	if (s == "svr" and not dac and not fft) 1
+	else graph[s] map dp(_, dac and s != "dac", fft and s != "fft") then sum
+);
+submit! 2, dp("out", 1, 1)

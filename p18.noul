@@ -1,0 +1,38 @@
+day := 18;
+import "advent-prelude.noul";
+
+patterns, string_1 := read() split "\n\n" map lines map tail;
+string := only(string_1);
+
+can_match := \pattern -> pattern zip string with \x, y -> x == "?" or x == y\\ then all;
+
+print(patterns count can_match);
+
+pattern := patterns join "";
+print(repr(pattern));
+
+n := len(string);
+shifts := 1 to n filter \s -> string[s:] == string[:-s];
+print("shifts", shifts);
+
+# If pattern[i:i+n] == string, what is max # of times string can appear up
+# to and including here? (If vacuous, 0)
+dp := [];
+
+# Prefix max
+dp' := [];
+
+for (i <- 0 to (len(pattern) - len(string))) (
+	dp_ans := 0;
+	if (can_match(pattern[i:i+n])) (
+		dp_ans = 1;
+		for (s <- shifts) (
+			if (i - s >= 0 and i - s < len(dp)) (dp_ans max= dp[i - s] + 1);
+		);
+		if (i - n >= 0 and i - n < len(dp')) (dp_ans max= dp'[i - n] + 1);
+	);
+	dp append= dp_ans;
+	dp' append= if (dp') max(dp'[-1], dp_ans) else dp_ans;
+);
+
+print(dp'[-1])

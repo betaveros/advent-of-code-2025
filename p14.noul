@@ -1,0 +1,21 @@
+day := 14;
+import "advent-prelude.noul";
+
+graph := {};
+state := {:0};
+for (lin <- read().lines) (
+	src, dsts := lin split ": ";
+	dsts .= words;
+	graph[src] = dsts;
+);
+ans := 0;
+for (_ <- 0 til 123456) (
+	sig := "sky"; # hack
+	while (sig != "OUT" and sig != "BIN") (
+		sig' := graph[sig][state[sig]];
+		state[sig] .= not;
+		sig = sig';
+	);
+	if (sig == "OUT") ans += 1;
+);
+print(ans)

@@ -1,0 +1,70 @@
+day := 10;
+import "advent-prelude.noul";
+
+puzzle_input := advent_input();
+
+submit! 1, puzzle_input.lines map \line -> (
+	[lights, ...buttons, joltage] := line.words;
+	lights = lights[1:-1] map (=="#") then vector;
+	buttons = buttons map ints map \seq -> 0 til lights.len map (in seq) then vector;
+	buttons.subsequences filter \s -> (s fold ~ from lights).any.not\\ map len then min
+)\\ then sum;
+
+submit! 2, puzzle_input.lines map \line -> (
+	[lights, ...buttons, joltage] := line.words;
+	lights = lights[1:-1] map (=="#") then vector;
+	buttons = buttons map ints map \seq -> 0 til lights.len map (in seq) then vector;
+	rows := (buttons +. (joltage.ints)).transpose map vector;
+	print("first sys of eqs", rows);
+	free_vars := for (col <- 0 til rows[0].len) yield not (
+		for (i, row <<- rows) (
+			if (row[col] and not(any(row[:col]))) (
+				row /= row[col];
+				rows[i] = row;
+				for (j, row' <<- rows; if j != i) (
+					rows[j] = row' - row'[col] / row[col] * row
+				);
+				break true
+			)
+		)
+	);
+	free_vars .= butlast;
+	free_cols := free_vars.enumerate filter second map first;
+	print("free vars", sum(free_vars));
+
+	# Brute force all reasonable values of the free variables
+	best := 1e10;
+	dfs := \fi, settings -> (
+		if (fi == len(free_cols)) (
+			# Button presses on free variables, corrected for the -1
+			ans := sum(settings) + 1;
+			bad := for (row <- rows) (
+				# Button presses on each constrained variable
+				sol := -(row * settings then sum);
+				if (sol < 0 or sol != int(sol)) break true;
+				ans += int(sol);
+			);
+			if (not bad) (
+				# print(settings, "->", ans);
+				best min= ans;
+			)
+		) else (
+			free_col := free_cols[fi];
+			# Try every possible nonnegative number of times to press
+			for (v <- iota 0) (
+				settings[free_col] = v;
+				acc := settings zip buttons with * then sum;
+				# print(fi, v, acc);
+				if (acc zip joltage.ints with > then any) (
+					break;
+				);
+				dfs(fi + 1, settings);
+			)
+		)
+	);
+	settings := vector(0 .* len(rows[0]));
+	settings[-1] = -1;
+	dfs(0, settings);
+	print(best);
+	best
+)\\ then sum

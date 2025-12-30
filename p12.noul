@@ -1,0 +1,12 @@
+day := 12;
+import "advent-prelude.noul";
+
+puzzle_input := advent_input();
+
+...tiles, challs := puzzle_input split "\n\n";
+areas := tiles map (_ count "#");
+
+submit! 1, for (chall <- challs.lines) yield (
+	h, w, ...cnts := chall.ints;
+	h*w > (cnts zip areas with * then sum)
+) into sum;

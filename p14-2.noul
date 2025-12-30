@@ -1,0 +1,17 @@
+day := 14;
+import "advent-prelude.noul";
+
+graph := {:[]};
+for (lin <- read().lines) (
+	src, dsts := lin split ": ";
+	dsts .= words;
+	if (len(dsts) == 2) (
+		d1, d2 := dsts;
+		graph[d1] append= [src, 1];
+		graph[d2] append= [src, 0];
+	)
+);
+dp := memoize \x -> if (x == "sky") 12^3456 else (
+	graph[x] map \[src, prio] -> (dp(src) + prio) // 2\\ then sum
+);
+print! (dp "OUT") % (10^15)

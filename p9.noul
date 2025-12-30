@@ -1,0 +1,51 @@
+day := 9;
+import "advent-prelude.noul";
+
+puzzle_input := advent_input();
+
+pts := puzzle_input.lines map ints map vector;
+
+submit! 1, pts combinations 2 map \[[a, b], [c, d]] -> (abs(a-c)+1)*(abs(b-d)+1)\\ then max;
+
+xs := pts map first then set then sort;
+ys := pts map second then set then sort;
+
+xcomp := for (i, x <<- xs) yield x: i;
+ycomp := for (i, y <<- ys) yield y: i;
+xmax := len(xs);
+ymax := len(ys);
+
+compressed_points := pts map \[x, y] -> V(xcomp[x], ycomp[y]);
+
+# This code is WRONG!!! But it passes my test case :)
+
+grid := {};
+for (p1, p2 <- (compressed_points +. compressed_points[0]) window 2) (
+	p := p1;
+	d := p2 - p1 map signum then vector;
+	assert(d any (==0));
+	assert(d any (!=0));
+	while (p != p2) (grid[p] = "O"; p += d);
+);
+
+stack := [V(-1, -1)];
+while (stack) (
+	p := pop stack;
+	grid[p] = ".";
+	for (q and (x, y) <- four_adjacencies p) (
+		if ((-1) <= x <= xmax and (-1) <= y <= ymax and q not_in grid) (
+			stack append= q
+		)
+	)
+);
+
+# debug print compressed grid
+for (y <- (-1) to ymax) print((for (x <- (-1) to xmax) yield grid !? V(x, y) or "/") join "");
+
+submit! 2, compressed_points combinations 2 map \[[x1, y1], [x2, y2]] -> (
+	x1, x2 = min(x1, x2), max(x1, x2);
+	y1, y2 = min(y1, y2), max(y1, y2);
+	if (for (x <- x1 to x2; y <- y1 to y2) yield (grid !? V(x, y)) != "." into all) (
+		(xs[x2] - xs[x1] + 1)*(ys[y2] - ys[y1] + 1)
+	) else 0
+)\\ then max
