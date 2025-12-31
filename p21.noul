@@ -1,0 +1,188 @@
+day := 21;
+import "advent-prelude.noul";
+
+grids := read() split "\n\n" map lines;
+
+solve := \grid -> (
+	outlets := for (r, row <<- grid; c, ch <<- row; if ch == "O") yield V(r, c);
+	assert! len(outlets) == 2;
+	q := [outlets[0]];
+	seen := {outlets[0]};
+	for (dist <- iota 0) (
+		for (p <- q; if p == outlets[1]) (
+			print(dist);
+			return dist - 1;
+		);
+		q = for (p <- q; delta <- [V(0,1),V(0,-1),V(1,0),V(-1,0)]; p' := p + delta; if (grid !!? p') not_in ["#", null] and p' not_in seen) yield p';
+		seen ||= set(q)
+	);
+);
+
+print(grids map solve then product);
+
+prune := \grid -> (
+	dots := for (r, row <<- grid; c, ch <<- row; if ch == ".") yield V(r, c);
+	degree := for (dot <- dots) yield dot:
+	[V(0,1),V(0,-1),V(1,0),V(-1,0)] count \d -> (grid !!? (dot + d)) != "#";
+	to_prune := degree.items filter (second equals 1) map first;
+	while (to_prune) (
+		p and [r, c] := pop to_prune;
+		grid[r][c] = "#";
+		for (d <- [V(0,1),V(0,-1),V(1,0),V(-1,0)]) (
+			p' and [r', c'] := p + d;
+			if (grid !!? p' == ".") (
+				degree[p'] -= 1;
+				if (degree[p'] == 1) to_prune append= p';
+			)
+		)
+	);
+	grid
+);
+
+grids = grids map prune;
+
+n := grids[0].len;
+
+#(
+get_outlet_liberties := \grid -> (
+	outlets := for (r, row <<- grid; c, ch <<- row; if ch == "O") yield V(r, c);
+	assert! len(outlets) == 2;
+	q := [outlets[0], outlets[1]];
+	dist := {outlets[0]: 0, outlets[1]: 0};
+	d := 1;
+	while (q) (
+		q = for (p <- q; del <- [V(0,1),V(0,-1),V(1,0),V(-1,0)]; p' := p + del; if grid !!? p' == "." and p' not_in dist) yield p' into set;
+		for (p' <- q) dist[p'] = d;
+		d += 1;
+	);
+	# print(dist);
+	dist.keys filter (any (_ in [0, n-1]))
+);
+)
+
+get_outlet_liberties := \grid -> (
+	for (r, row <<- grid; c, ch <<- row; if ch == "." and {r, c} && {0, n-1}) yield V(r, c)
+);
+
+# Coords will be the unit cubes immediately outside [0, n]^3.
+# So exactly one of x, y, z will be either -1 or n;
+# the other two will be in [0, n).
+
+neighbors := memoize \p -> (
+	oi := p locate (_ in [-1, n]);
+	deltas := for (i, v <<- p; if v not_in [-1, n]; d <- [-1, 1]) yield
+	V(0, 0, 0){i = d};
+	# print("deltas", deltas);
+	for (d <- deltas) yield (
+		p' := p + d;
+		ois := p' filter (_ in [-1, n]);
+		if (len(ois) > 1) (
+			if (p'[oi] == (-1)) p'[oi] = 0
+			else (
+				assert(p'[oi] == n);
+				p'[oi] = n - 1;
+			)
+		);
+		p'
+	)
+);
+
+print(neighbors(V(0, 0, -1)));
+print(neighbors(V(n, 3, 2)));
+
+faces := [
+	[V(0, 0, -1), V(1, 0, 0), V(0, 1, 0)],
+	[V(0, -1, 0), V(0, 0, 1), V(1, 0, 0)],
+	[V(-1, 0, 0), V(0, 1, 0), V(0, 0, 1)],
+	[V(0, 0, n), V(0, 1, 0), V(1, 0, 0)],
+	[V(0, n, 0), V(1, 0, 0), V(0, 0, 1)],
+	[V(n, 0, 0), V(0, 0, 1), V(0, 1, 0)],
+];
+
+rotate_grid := transpose <<< reverse;
+# [r,c] -> [c,r] -> [c,n-1-r]
+
+
+orig_libs := grids map get_outlet_liberties;
+print("libs", orig_libs);
+
+rotate_all_vectors := \vs -> vs map \[r, c] -> V(c, n-1-r);
+
+# gi0, gj0 := 94, 840;
+gi0, gj0 := for (
+	gi, libs' <<- permutations(orig_libs[1:]);
+	gj, rotated_libs <<- libs' map (_ iterate rotate_all_vectors take 4) apply **
+) (
+	all_libs := orig_libs[0] .+ rotated_libs;
+	fimap := for (fi, [[corner, rd, cd], ls] <<- faces zip all_libs;
+		r, c <- ls
+	) yield corner + r * rd + c * cd: fi;
+
+	root := \x -> (
+		p := fimap !? x;
+		if (p == null) return x;
+		r := root(p);
+		fimap[x] = r;
+		r
+	);
+
+	mc := 0;
+	for (v <- fimap; v' <- neighbors v; if v' in fimap) (
+		r := root(v);
+		r' := root(v');
+		if (r != r') (
+			mc += 1;
+			# if (mc > 2) print(F"merging {v} and {v'} roots {r} and {r'}, merge count {mc}");
+			fimap[r] = r';
+		)
+	);
+	if (len(set(for (fi <- 0 til 6) yield root(fi))) == 1) (
+		print(gi, gj);
+		break [gi, gj]
+	)
+);
+
+oks := 0;
+for (
+	gi, grids1p <<- permutations(grids[1:]);
+	if gi == gi0;
+	gj, rotated_grids <<- grids1p map (_ iterate rotate_grid take 4) apply **;
+	if gj == gj0
+) (
+	all_grids := grids[0] .+ rotated_grids;
+	world := for ([corner, rd, cd], grid <- faces zip all_grids;
+		r, row <<- grid;
+		c, ch <<- row
+	) yield corner + r * rd + c * cd: ch;
+
+	outlets := for (p, ch <<- world; if ch == "O") yield p;
+	assert! len(outlets) == 12;
+	q := [outlets[0]];
+	dist := {outlets[0]: 0};
+	d := 1;
+	while (q) (
+		q = for (p <- q; p' <- neighbors p; if world !! p' != "#" and p' not_in dist) yield p' into set;
+		for (p' <- q) dist[p'] = d;
+		d += 1;
+	);
+	allok := outlets all (in dist);
+	print("allok", allok, gi, gj);
+	oks += allok;
+
+	# prune on world
+	dots := for (p, ch <<- world; if ch == ".") yield p;
+	degree := for (dot <- dots) yield dot: dot.neighbors count \pp -> world[pp] != "#";
+	to_prune := degree.items filter (second equals 1) map first;
+	while (to_prune) (
+		p := pop to_prune;
+		world[p] = "#";
+		for (p' <- neighbors p) (
+			if (world[p'] == ".") (
+				degree[p'] -= 1;
+				if (degree[p'] == 1) to_prune append= p';
+			)
+		)
+	);
+	print(world.values count (=="."))
+);
+oks

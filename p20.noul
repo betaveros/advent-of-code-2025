@@ -1,0 +1,87 @@
+day := 20;
+import "advent-prelude.noul";
+
+circles := read().lines map ints;
+
+\circles -> (
+	z, [x, y, r] := max! for (circle and [x, y, r] <- circles) yield (
+		overlaps := (circles count \[x', y', r'] -> (x - x')^2 + (y - y')^2 < (r + r')^2\\) - 1;
+		[overlaps, circle]
+	);
+	print(x * y + z);
+)\\(circles);
+
+x_ints := \[x, y, r], y' -> (
+	d := r^2 - (y - y')^2;
+	if (d >= 0) (s := sqrt(d); [x - floor(s), x + floor(s)])
+	else null
+);
+
+intersects_on := \c1, c2, y -> (
+	i1 := x_ints(c1, y); if (not i1) return false;
+	i2 := x_ints(c2, y); if (not i2) return false;
+	x11, x12 := i1;
+	x21, x22 := i2;
+	x12 >= x21 and x22 >= x11
+);
+
+ys := set! for (
+	(c1 and [x1, y1, r1]), (c2 and [x2, y2, r2]) <- circles combinations 2;
+	if (x1 - x2)^2 + (y1 - y2)^2 < (r1 + r2)^2
+) yield (
+	# intersecting circles
+	ylo_0 := min(y1 - r1, y2 - r2);
+	yhi_0 := max(y1 + r1, y2 + r2);
+	ymid_0 := (y1 * r2 + y2 * r1) / (r1 + r2);
+
+	ycs := [];
+
+	# bin search to find lowest and highest y where circles intersect
+	ylo := ylo_0; # doesn't
+	yhi := ceil(ymid_0); # does
+	while (yhi - ylo > 1) (
+		ymid := (yhi + ylo) // 2;
+		if (intersects_on(c1, c2, ymid)) (
+			yhi = ymid;
+		) else (
+			ylo = ymid;
+		)
+	);
+
+	ycs append= yhi;
+
+	ylo = floor(ymid_0); # does
+	yhi = yhi_0; # doesn't
+	while (yhi - ylo > 1) (
+		ymid := (yhi + ylo) // 2;
+		if (intersects_on(c1, c2, ymid)) (
+			ylo = ymid;
+		) else (
+			yhi = ymid;
+		)
+	);
+
+	ycs append= ylo;
+	ycs
+) into flatten;
+
+print("got ys", len(ys));
+
+best := 0;
+for (y <- ys) (
+	deltas := for (c <- circles) yield (
+		switch (x_ints(c, y))
+		case x1, x2 -> [[x1, 1], [x2 + 1, -1]]
+		case null -> []
+	) into flatten;
+	acc := 0;
+	for ([x, d], nx <- (sort deltas) window 2) (
+		acc += d;
+		if (acc > best) (
+			best = acc;
+			print("best", acc, x, y, x*y, nx)
+		) else if (acc == best) (
+			print("tie", acc, x, y, x*y, nx)
+		)
+	)
+)

@@ -1,0 +1,48 @@
+day := 19;
+import "advent-prelude.noul";
+
+grids := read() split "\n\n" map lines;
+
+solve := \grid -> (
+	nr := len(grid);
+	nc := len(grid[0]);
+	dp := memoize \r, c -> (
+		m := 0;
+		if (r > 0) m max= dp(r - 1, c);
+		if (c > 0) m max= dp(r, c - 1);
+		m + int(grid[r][c])
+	);
+	dp(nr - 1, nc - 1)
+);
+
+print(grids map solve then product);
+
+solve2 := \grid -> (
+	nr := len(grid);
+	nc := len(grid[0]);
+	dp := memoize \r, c, dr, dc -> (
+		m := 0;
+		if (0 <= r - dr < nr) m max= dp(r - dr, c, dr, dc);
+		if (0 <= c - dc < nc) m max= dp(r, c - dc, dr, dc);
+		m + int(grid[r][c])
+	);
+	ans := 0;
+	for (r <- 1 to (nr - 2); c <- 1 to (nc - 2)) (
+		ans max= int(grid[r][c]) * 2 +
+		max(
+			dp(r - 1, c, 1, 1) +
+			dp(r, c - 1, -1, 1) +
+			dp(r + 1, c, -1, -1) +
+			dp(r, c + 1, 1, -1),
+
+			dp(r - 1, c, 1, -1) +
+			dp(r, c - 1, 1, 1) +
+			dp(r + 1, c, -1, 1) +
+			dp(r, c + 1, -1, -1),
+		)
+	);
+
+	ans
+);
+
+print(grids map solve2 then product);

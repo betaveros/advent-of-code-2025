@@ -1,0 +1,83 @@
+day := 23;
+import "advent-prelude.noul";
+
+grids := read() split "\n\n" map lines;
+
+struct Edge(e_src, e_dst, e_resid, e_cost);
+
+solve := \grid -> (
+	grid[0][0] = "0";
+	grid[-1][-1] = "0";
+	edges := [];
+	graph := {:[]};
+
+	add_edge := \src, dst, resid, cost -> (
+		graph[src] append= len(edges);
+		edges append= Edge(src, dst, 1, cost);
+		graph[dst] append= len(edges);
+		edges append= Edge(dst, src, 0, -cost);
+	);
+
+	for (r, row <<- grid; c, ch <<- row) (
+		top := V(r, c, 0);
+		bot := V(r, c, 1);
+		add_edge(top, bot, 1, int(ch));
+
+		for (
+			d <- [V(0,1),V(0,-1),V(1,0),V(-1,0)];
+			r', c' := V(r, c) + d;
+			if grid !!? [r', c']
+		) (
+			add_edge(bot, V(r', c', 0), 1, 0)
+		)
+	);
+
+	total_cost := 0;
+	print("graph size", len(graph));
+	for (bfi <- 0 to 1) (
+		print("b-f", bfi);
+		# Bellman-Ford
+		dist := for (v <- graph) yield v: 10^10;
+		pred := for (v <- graph) yield v: null;
+
+		src := V(0, 0, 1);
+		dst := V(len(grid) - 1, len(grid[0]) - 1, 0);
+
+		dist[src] = 0;
+
+		good_edges := edges.enumerate filter (\[_, e] -> e::e_resid > 0);
+
+		for (
+			gi <- 0 til len(graph)
+		) (
+			print(gi);
+			relaxed := false;
+			for (
+				ei, Edge(v, w, resid, cost) <- good_edges;
+				if dist[v] + cost < dist[w]
+			) (
+				dist[w] = dist[v] + cost;
+				pred[w] = ei;
+				relaxed = true;
+			);
+			# oops early stopping is very effective
+			if (not relaxed) break;
+		);
+
+		# Augment the path
+		v := dst;
+		assert(dist[v] < 10^9);
+		total_cost += dist[v];
+		while (v != src) (
+			ei := pred[v];
+			assert! edges[ei]::e_dst == v;
+			edges[ei]::e_resid -= 1;
+			edges[ei ~ 1]::e_resid += 1;
+			v = edges[ei]::e_src;
+		);
+	);
+	print(total_cost);
+	total_cost
+);
+
+grids map solve then product

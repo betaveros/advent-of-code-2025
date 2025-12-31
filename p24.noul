@@ -1,0 +1,27 @@
+day := 24;
+import "advent-prelude.noul";
+
+ns := read().ints;
+print(ns iterate (\x -> x pairwise max map (+1)) take id then flatten then sum);
+
+bottom := ns group 5 flat_map \[init, b, c, mod, n] -> init iterate (\x -> (x * b + c) % mod) take n;
+
+ans := 0;
+state := []; # [value, len] pairs; decreasing
+state_sum := 0;
+for (n <- bottom) (
+	n_len := 1;
+	while (state and state[-1][0] <= n) (
+		v, vlen := pop state;
+		state_sum -= v * vlen;
+		n_len += vlen;
+	);
+	state append= [n, n_len];
+	state_sum += n * n_len;
+	ans += state_sum;
+	# print(ans);
+);
+
+print("---");
+
+ans + sum(for (i <- 0 til len(bottom)) yield i * (len(bottom) - i))

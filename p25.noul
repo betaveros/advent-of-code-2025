@@ -1,0 +1,55 @@
+day := 25;
+import "advent-prelude.noul";
+
+read() split "\n\n" drop 6 then enumerate map \[i, chall] -> (
+	header, ...grid := chall.lines;
+	rs, cs, ...ns := header.ints;
+	n_dominoes := sum(ns);
+
+	squares := [[], []];
+	for (r, row <<- grid; c, ch <<- row; if ch == ".") (
+		squares[(r + c) % 2] append= V(r, c);
+	);
+
+	dominoes := {};
+	flows := 0;
+
+	for (src <- squares[0]) (
+		# augment from src
+		q := [src];
+		pred := {};
+		while (q) (
+			v := pop q;
+			for (
+				d <- [V(0,1),V(0,-1),V(1,0),V(-1,0)];
+				w := v + d;
+				if grid !!? w == "."
+			) (
+				if (w not_in dominoes) (
+					# found augmenting path
+					cur := w;
+					prev := v;
+					while (true) (
+						cur' := dominoes !? prev;
+						dominoes[cur] = prev;
+						dominoes[prev] = cur;
+						if (cur' == null) break;
+						cur = cur';
+						prev = pred[cur'];
+					);
+					flows += 1;
+					break break;
+				) else (
+					# could keep exploring dominoes[w]
+					if (w not_in pred) (
+						pred[w] = v;
+						q append= dominoes[w];
+					)
+				)
+			)
+		);
+
+		if (flows >= n_dominoes) return i + 1;
+	);
+	0
+)\\ then sum then print

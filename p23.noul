@@ -1,0 +1,53 @@
+day := 23;
+import "advent-prelude.noul";
+
+grids := read() split "\n\n" map lines;
+
+dist_from := \grid, start -> (
+	dist := {};
+	queue := {start: 0};
+	while (queue) (
+		next_dist, next_v := queue.items map reverse then min;
+		queue -.= next_v;
+		dist[next_v] = next_dist;
+		for (d <- [V(0,1),V(0,-1),V(1,0),V(-1,0)];
+			w := next_v + d;
+			if grid !!? w and w not_in dist
+		) (
+			if (w in queue) (
+				queue[w] min= next_dist + int(grid !!! w);
+			) else (
+				queue[w] = next_dist + int(grid !!! w);
+			)
+		)
+	);
+	dist
+);
+
+solve := \grid -> (
+	dist := {};
+	grid[0][0] = "0";
+	grid[-1][-1] = "0";
+	from_start := dist_from(grid, V(0, 0));
+	from_end := dist_from(grid, V(len(grid)-1, len(grid[0])-1));
+
+	queue := {V(0, 0): 0};
+	while (queue) (
+		next_dist, next_v := queue.items map reverse then min;
+		if (next_v == V(len(grid)-1, len(grid[0])-1)) return next_dist;
+		queue -.= next_v;
+		dist[next_v] = next_dist;
+		for (d <- [V(0,1),V(0,-1),V(1,0),V(-1,0)];
+			w := next_v + d;
+			if grid !!? w and w not_in dist
+		) (
+			if (w in queue) (
+				queue[w] min= next_dist + int(grid !!! w);
+			) else (
+				queue[w] = next_dist + int(grid !!! w);
+			)
+		)
+	)
+);
+
+grids map solve then product

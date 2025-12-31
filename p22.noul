@@ -1,0 +1,58 @@
+day := 22;
+import "advent-prelude.noul";
+
+challs := read() split "\n\n" map ints;
+
+solve := \_, digit, divisor -> (
+	for (n_digits <- iota 1) (
+		s := for (
+			n_nonfav <- 0 to floor(n_digits/2);
+			nonfav_is <- (0 til n_digits) combinations n_nonfav;
+			nonfav_ds <- (0 to 9 filter (!= digit)) ^^ n_nonfav;
+			v := (
+				k := digit .* n_digits;
+				for (i, d <- nonfav_is zip nonfav_ds)
+				k[i] = d;
+				k
+			);
+			if v[0] != 0;
+			n := v apply $ then int;
+			if n % divisor == 0
+		) yield n;
+		if (s) return min(s);
+	)
+);
+
+print(challs mapply solve then sum);
+
+solve2 := \_, fav, divisor -> (
+	# dp([n])[f][m] = how many n-digit positive integers
+	# have the digit exactly f times and equal m mod divisor
+	ans := 0;
+	dp := 0 .* divisor .* 9;
+	print(divisor);
+	# print(dp);
+	dp[0][0] = 1;
+
+	for (n <- 1 to 16) (
+		dp' := 0 .* divisor .* 9;
+		for (
+			f, row <<- dp;
+			if f < n;
+			m, cnt <<- row;
+			dig <- 0 to 9;
+			if n > 1 or dig > 0
+		) (
+			f' := min(8, f + (dig == fav));
+			dp'[f'][(m * 10 + dig) % divisor] += cnt
+		);
+		if (8 <= n <= 16) (
+			for (f <- ceil(n/2) to min(n, 8)) ans += dp'[f][0]
+		);
+		dp = dp'
+	);
+
+	ans
+);
+
+print(challs mapply solve2 then sum);
